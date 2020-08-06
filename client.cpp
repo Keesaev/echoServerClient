@@ -28,7 +28,9 @@ bool Client::write(){
     char buf[1024];
     boost::system::error_code errorCode;
     char msg[1024];
-    strcpy(msg, "Hello World");
+    strcpy(msg, "Client ");
+    strcat(msg, name.data());
+    strcat(msg, " message");
     size_t length = 1;
 
     // Send data
@@ -41,18 +43,19 @@ bool Client::write(){
         while(true){
             length = socket->read_some(boost::asio::buffer(buf), errorCode);
 
-            outputMutex->lock();
-            std::cout << "Client " << name << " reads: ";
-            printf(buf);
-            std::cout << std::endl;
-            outputMutex->unlock();
-
             if(errorCode == boost::asio::error::eof){ // End of file
                 socket->close();
                 break;
             }
             else if(errorCode)                       // Other errors
                 throw(boost::system::system_error(errorCode));
+
+            outputMutex->lock();
+            std::cout << "Client " << name << " reads: ";
+            printf(buf);
+            std::cout << std::endl;
+            outputMutex->unlock();
+
         }
     }
     catch(boost::system::system_error& e){
@@ -60,7 +63,10 @@ bool Client::write(){
         return 0;
     }
 
+    outputMutex->lock();
     std::cout << "Client " << name << " is not active\n";
+    outputMutex->unlock();
+
     return 1;
 }
 

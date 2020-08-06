@@ -16,13 +16,21 @@ int main(int argc, char *argv[])
     unsigned short port = 8001;
 
     Server *serv = new Server(&io_service_server, &outputMutex, port);
-    Client *cl = new Client(&io_service_client, &outputMutex, "One", port);
-
     boost::thread serverThread(&Server::listen, serv);
-    boost::thread clientThread{&Client::write, cl};
+
+    std::vector<Client*> clients;
+    std::vector<boost::thread> threads;
+
+    for(int i = 0; i < 5; i++){
+        clients.push_back(new Client(&io_service_client,
+                                     &outputMutex,
+                                     std::to_string(i + 1),
+                                     port));
+        threads.push_back(boost::thread{&Client::write, clients[i]});
+        threads[i].join();
+    }
 
     serverThread.join();
-    clientThread.join();
 
     return a.exec();
 }
